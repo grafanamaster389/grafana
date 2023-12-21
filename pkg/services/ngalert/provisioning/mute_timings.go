@@ -39,7 +39,27 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		result = append(result, definitions.MuteTimeInterval{MuteTimeInterval: interval})
+// GetMuteTiming returns a mute timing by name
+func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
+	rev, err := svc.config.Get(ctx, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
 	}
+
+	mt, _, err := getMuteTiming(rev, name)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
+	result := definitions.MuteTimeInterval{
+		MuteTimeInterval: mt,
+	}
+
+	prov, err := svc.prov.GetProvenance(ctx, &result, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	result.Provenance = definitions.Provenance(prov)
 	return result, nil
 }
 
@@ -149,4 +169,16 @@ func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
 		}
 	}
 	return false
+}
+
+func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int, error) {
+	if rev.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
+		return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound
+	}
+	for idx, mt := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
+		if mt.Name == name {
+			return mt, idx, nil
+		}
+	}
+	return config.MuteTimeInterval{}, -1, ErrMuteTimingsNotFound
 }
