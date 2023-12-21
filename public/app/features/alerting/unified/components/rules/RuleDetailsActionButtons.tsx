@@ -104,77 +104,53 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
   if (isCloudRulesSource(rulesSource) && exploreSupported && exploreAllowed && !isFederated) {
+    const onClickSeeGraph = () => window.open(createExploreLink(rulesSource, rule.query), '_blank');
     buttons.push(
-      <LinkButton
-        size="sm"
-        key="explore"
-        variant="primary"
-        icon="chart-line"
-        target="__blank"
-        href={createExploreLink(rulesSource, rule.query)}
-      >
+      <Button size="sm" key="explore" variant="primary" icon="chart-line" onClick={onClickSeeGraph}>
         See graph
-      </LinkButton>
+      </Button>
     );
   }
   if (rule.annotations[Annotation.runbookURL]) {
+    const onClick = () => window.open(textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL]), '_blank');
     buttons.push(
-      <LinkButton
-        size="sm"
-        key="runbook"
-        variant="primary"
-        icon="book"
-        target="__blank"
-        href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
-      >
+      <Button size="sm" key="runbook" variant="primary" icon="book" onClick={onClick}>
         View runbook
-      </LinkButton>
+      </Button>
     );
   }
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
+      const onClickDashboard = () => window.open(`d/${encodeURIComponent(dashboardUID)}`, '_blank');
       buttons.push(
-        <LinkButton
-          size="sm"
-          key="dashboard"
-          variant="primary"
-          icon="apps"
-          target="__blank"
-          href={`d/${encodeURIComponent(dashboardUID)}`}
-        >
+        <Button size="sm" key="dashboard" variant="primary" icon="apps" onClick={onClickDashboard}>
           Go to dashboard
-        </LinkButton>
+        </Button>
       );
       const panelId = rule.annotations[Annotation.panelID];
+      const onClickPanel = () =>
+        window.open(`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`, '_blank');
       if (panelId) {
         buttons.push(
-          <LinkButton
-            size="sm"
-            key="panel"
-            variant="primary"
-            icon="apps"
-            target="__blank"
-            href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
-          >
+          <Button size="sm" key="panel" variant="primary" icon="apps" onClick={onClickPanel}>
             Go to panel
-          </LinkButton>
+          </Button>
         );
       }
     }
   }
 
   if (canSilence) {
+    const onClickSilence = () => {
+      if (alertmanagerSourceName) {
+        window.open(makeRuleBasedSilenceLink(alertmanagerSourceName, rule), '_blank');
+      }
+    };
     buttons.push(
-      <LinkButton
-        size="sm"
-        key="silence"
-        icon="bell-slash"
-        target="__blank"
-        href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
-      >
+      <Button size="sm" key="silence" icon="bell-slash" onClick={onClickSilence}>
         Silence
-      </LinkButton>
+      </Button>
     );
   }
 

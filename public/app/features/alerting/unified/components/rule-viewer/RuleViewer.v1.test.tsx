@@ -64,7 +64,7 @@ const mocks = {
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
-    silence: byRole('link', { name: 'Silence' }),
+    silence: byText(/silence/i),
   },
   moreButton: byRole('button', { name: /More/i }),
   moreButtons: {

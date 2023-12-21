@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { byRole } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { getPluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
@@ -37,7 +37,7 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
     delete: byRole('button', { name: /delete/i }),
-    silence: byRole('link', { name: 'Silence' }),
+    silence: byText(/silence/i),
   },
 };
 
