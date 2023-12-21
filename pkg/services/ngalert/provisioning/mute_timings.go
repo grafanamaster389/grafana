@@ -66,7 +66,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
 func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return nil, makeErrMuteTimingInvalid(err)
 	}
 
 	revision, err := svc.config.Get(ctx, orgID)
@@ -79,7 +79,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	}
 	for _, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if mt.Name == existing.Name {
-			return nil, fmt.Errorf("%w: %s", ErrValidation, "a mute timing with this name already exists")
+			return nil, ErrMuteTimingExists
 		}
 	}
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mt.MuteTimeInterval)
@@ -96,7 +96,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, nil is returned and no action is taken.
 func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return nil, makeErrMuteTimingInvalid(err)
 	}
 
 	revision, err := svc.config.Get(ctx, orgID)
@@ -139,7 +139,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return nil
 	}
 	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return fmt.Errorf("mute time '%s' is currently used by a notification policy", name)
+		return ErrMuteTimingInUse
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name == existing.Name {
