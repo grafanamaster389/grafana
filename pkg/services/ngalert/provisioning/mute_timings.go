@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prometheus/alertmanager/config"
 
@@ -36,9 +35,22 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return []definitions.MuteTimeInterval{}, nil
 	}
 
+	provenances, err := svc.prov.GetProvenances(ctx, orgID, (&definitions.MuteTimeInterval{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		result = append(result, definitions.MuteTimeInterval{MuteTimeInterval: interval})
+		def := definitions.MuteTimeInterval{MuteTimeInterval: interval}
+		if prov, ok := provenances[def.ResourceID()]; ok {
+			def.Provenance = definitions.Provenance(prov)
+		}
+		result = append(result, def)
+	}
+	return result, nil
+}
+
 // GetMuteTiming returns a mute timing by name
 func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
 	rev, err := svc.config.Get(ctx, orgID)
