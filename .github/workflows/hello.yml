@@ -2,6 +2,7 @@
 name: build grafana
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
